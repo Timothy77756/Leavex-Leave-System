@@ -7,42 +7,68 @@
   <div class="bg-dark text-white p-4 rounded shadow-sm">
     <h2 class="text-center mb-4">Welcome, <span class="text-info">{{ user.full_name }}</span></h2>
     <p class="text-center">Department: <span class="text-warning">{{ department }}</span></p>
-<h2>Leave Progress</h2>
 
-  <div id="progress-container">
-    <div id="progress-text" class="progress-text"></div>
-  </div>
+    <!-- Leave Balance Donut Charts -->
+    <h2 class="text-center mt-4">Leave Balances</h2>
+    <div class="row text-center" style="margin-bottom: 30px;">
+      <div class="col-md-3 col-6 mb-4">
+        <canvas id="sickLeaveChart"></canvas>
+        <p class="mt-2">Sick Leave</p>
+      </div>
+      <div class="col-md-3 col-6 mb-4">
+        <canvas id="privilegedLeaveChart"></canvas>
+        <p class="mt-2">Privileged Leave</p>
+      </div>
+      <div class="col-md-3 col-6 mb-4">
+        <canvas id="floaterHolidayChart"></canvas>
+        <p class="mt-2">Floater Holiday</p>
+      </div>
+      <div class="col-md-3 col-6 mb-4">
+        <canvas id="casualLeaveChart"></canvas>
+        <p class="mt-2">Casual Leave</p>
+      </div>
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/progressbar.js"></script>
-  <script>
-    const maxAllowed = 60;
-    const totalTaken = 15;
-    const percent = totalTaken / maxAllowed;
-
-    // Create circular progress
-    const bar = new ProgressBar.Circle('#progress-container', {
-      color: '#e74c3c',
-      strokeWidth: 10,
-      trailColor: '#ecf0f1',
-      trailWidth: 5,
-      easing: 'easeInOut',
-      duration: 1400,
-      step: function(state, circle) {
-        // You can change the animation or color here if needed
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      function createDonutChart(id, used, total, color) {
+        new Chart(document.getElementById(id), {
+          type: 'doughnut',
+          data: {
+            labels: ['Used', 'Remaining'],
+            datasets: [{
+              data: [used, total - used],
+              backgroundColor: [color, '#e0e0e0']
+            }]
+          },
+          options: {
+            cutout: '70%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.label + ': ' + context.formattedValue + ' days';
+                  }
+                }
+              }
+            }
+          }
+        });
       }
-    });
 
-    // Animate and set text
-    bar.animate(percent, {
-      duration: 1000
-    }, function () {
-      document.getElementById('progress-text').textContent = `${totalTaken}/${maxAllowed}`;
-    });
-  </script>
+      createDonutChart('sickLeaveChart', {{ leave_balances.sick_leave|default:0 }}, 10, '#ff6384');
+      createDonutChart('privilegedLeaveChart', {{ leave_balances.privileged_leave|default:0 }}, 10, '#36a2eb');
+      createDonutChart('floaterHolidayChart', {{ leave_balances.floater_holiday|default:0 }}, 5, '#ffcd56');
+      createDonutChart('casualLeaveChart', {{ leave_balances.casual_leave|default:0 }}, 5, '#4bc0c0');
+    </script>
+
     <!-- My Leave Requests -->
     <div class="mt-5">
       <h4 class="text-light">📌 My Leave Requests</h4>
-    <button style='width:100px;height:55px;background-color:blue;color:white;'><a href="{% url 'reliever_requests' %}">Check leave requests</a></button>
+      <button style='width:100px;height:55px;background-color:blue;color:white;'>
+        <a href="{% url 'reliever_requests' %}" style="color:white;text-decoration:none;">Check leave requests</a>
+      </button>
       {% if my_leaves %}
         <ul class="list-group mb-4">
           {% for leave in my_leaves %}
